@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaCrawler - 数据展示中心</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#60A5FA',
+                        cta: '#F97316',
+                    },
+                    fontFamily: {
+                        sans: ['Fira Sans', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h1 class="text-xl font-semibold text-slate-900">MediaCrawler</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-full">
+                        <span id="statusDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="statusText" class="text-sm font-medium text-slate-700">准备就绪</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Crawler Control Panel -->
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm mb-8">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900">爬虫控制面板</h2>
+            </div>
+            <div class="p-6">
+                <form id="crawlerForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Platform Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">平台</label>
+                            <select id="platform" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="xhs">小红书</option>
+                            </select>
+                        </div>
+
+                        <!-- Login Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">登录方式</label>
+                            <select id="loginType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="qrcode">二维码登录</option>
+                                <option value="cookie">Cookie登录</option>
+                            </select>
+                        </div>
+
+                        <!-- Crawler Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">爬取模式</label>
+                            <select id="crawlerType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="search">关键词搜索</option>
+                                <option value="detail">指定帖子</option>
+                                <option value="creator">博主主页</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">排序方式</label>
+                            <select id="sortType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                <option value="popularity_descending">点赞数排序</option>
+                                <option value="comment_descending">评论数排序</option>
+                                <option value="time_descending">时间维度排序</option>
+                            </select>
+                        </div>
+
+                        <!-- Keywords (for search mode) -->
+                        <div id="keywordsGroup">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">关键词（逗号分隔）</label>
+                            <input type="text" id="keywords" placeholder="例如：美食,旅游,摄影" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- Max Count -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">爬取数量</label>
+                            <input type="number" id="maxCount" value="150" min="1" max="500" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="enableComments" checked class="rounded border-slate-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-slate-700">爬取评论</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="enableSubComments" class="rounded border-slate-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-slate-700">爬取二级评论</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="headless" class="rounded border-slate-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-slate-700">无头模式</span>
+                        </label>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button type="button" id="startBtn" class="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            启动爬虫
+                        </button>
+                        <button type="button" id="stopBtn" class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            停止爬虫
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Status Display -->
+                <div id="crawlerStatusDisplay" class="mt-6 p-4 bg-slate-50 rounded-lg hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-700">运行状态</span>
+                        <span id="statusBadge" class="px-2 py-1 text-xs font-medium rounded-full"></span>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        <div>进度: <span id="progressText">0%</span></div>
+                        <div>已爬取: <span id="currentCount">0</span> / <span id="totalCount">0</span></div>
+                        <div>当前页: <span id="currentPage">-</span></div>
+                        <div id="statusMessage" class="text-slate-500">等待开始...</div>
+                    </div>
+                    <div class="mt-4 w-full bg-slate-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Logs Display -->
+                <div id="logsDisplay" class="mt-6 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-700">实时日志</span>
+                        <button id="clearLogsBtn" class="text-xs text-slate-500 hover:text-slate-700">清空日志</button>
+                    </div>
+                    <div id="logsContent" class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-xs max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Contents Card -->
+            <div class="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-slate-600 uppercase tracking-wide">总内容数</h3>
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline">
+                    <p id="totalContents" class="text-3xl font-bold text-slate-900">0</p>
+                </div>
+                <p class="mt-2 text-sm text-slate-500">最新数据</p>
+            </div>
+
+            <!-- Total Comments Card -->
+            <div class="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-slate-600 uppercase tracking-wide">总评论数</h3>
+                    <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline">
+                    <p id="totalComments" class="text-3xl font-bold text-slate-900">0</p>
+                </div>
+                <p class="mt-2 text-sm text-slate-500">最新数据</p>
+            </div>
+
+            <!-- Active Crawlers Card -->
+            <div class="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-slate-600 uppercase tracking-wide">活跃爬虫</h3>
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-cta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline">
+                    <p id="activeCrawlers" class="text-3xl font-bold text-slate-900">0</p>
+                </div>
+                <p id="crawlerStatus" class="mt-2 text-sm text-slate-500">待机中</p>
+            </div>
+
+            <!-- Total Files Card -->
+            <div class="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-slate-600 uppercase tracking-wide">数据文件</h3>
+                    <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline">
+                    <p id="totalFiles" class="text-3xl font-bold text-slate-900">0</p>
+                </div>
+                <p class="mt-2 text-sm text-slate-500">JSON/CSV</p>
+            </div>
+        </div>
+
+        <!-- Data Section -->
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 class="text-lg font-semibold text-slate-900">最新数据</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn active px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 bg-primary text-white" data-type="all">全部</button>
+                        <button class="filter-btn px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 bg-slate-100 text-slate-700 hover:bg-slate-200" data-type="xhs">小红书</button>
+                        <button class="filter-btn px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 bg-slate-100 text-slate-700 hover:bg-slate-200" data-type="contents">内容</button>
+                        <button class="filter-btn px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 bg-slate-100 text-slate-700 hover:bg-slate-200" data-type="comments">评论</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="loadingSkeleton" class="hidden p-6">
+                <div class="space-y-4">
+                    <div class="animate-pulse">
+                        <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+                    </div>
+                    <div class="animate-pulse">
+                        <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                    <div class="animate-pulse">
+                        <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">标题/内容</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">关键词</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">点赞数</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">评论数</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="bg-white divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <p class="mt-4 text-sm text-slate-500">加载中...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden px-6 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-slate-900">暂无数据</h3>
+                <p class="mt-1 text-sm text-slate-500">请先运行爬虫以获取数据</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Refresh Button -->
+    <button id="refreshBtn" class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" title="刷新数据">
+        <svg id="refreshIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+    </button>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let currentFilter = 'all';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            loadCrawlerStatus();
+            setupCrawlerControls();
+            
+            // 设置定时刷新状态（缩短间隔提高实时性）
+            setInterval(() => {
+                loadCrawlerStatus();
+            }, 2000); // 从3秒缩短到2秒
+            
+            // 实时日志刷新（只在运行中时）
+            setInterval(() => {
+                const statusDisplay = document.getElementById('crawlerStatusDisplay');
+                if (statusDisplay && !statusDisplay.classList.contains('hidden')) {
+                    loadCrawlerLogs();
+                }
+            }, 1500); // 缩短到1.5秒，提高实时性
+            
+            setInterval(() => {
+                loadData();
+            }, 30000);
+
+            // 监听爬虫类型变化
+            document.getElementById('crawlerType').addEventListener('change', (e) => {
+                const keywordsGroup = document.getElementById('keywordsGroup');
+                if (e.target.value === 'search') {
+                    keywordsGroup.style.display = 'block';
+                } else {
+                    keywordsGroup.style.display = 'none';
+                }
+            });
+
+            // 过滤器按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active', 'bg-primary', 'text-white');
+                        b.classList.add('bg-slate-100', 'text-slate-700');
+                    });
+                    btn.classList.add('active', 'bg-primary', 'text-white');
+                    btn.classList.remove('bg-slate-100', 'text-slate-700');
+                    currentFilter = btn.dataset.type;
+                    loadData();
+                });
+            });
+
+            // 刷新按钮
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                const icon = document.getElementById('refreshIcon');
+                icon.classList.add('animate-spin');
+                loadData();
+                loadCrawlerStatus();
+                setTimeout(() => {
+                    icon.classList.remove('animate-spin');
+                }, 1000);
+            });
+        });
+
+        // 加载爬虫状态
+        async function loadCrawlerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/crawler/status`);
+                const data = await response.json();
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                const crawlerStatus = document.getElementById('crawlerStatus');
+                const activeCrawlers = document.getElementById('activeCrawlers');
+
+                if (data.status === 'running') {
+                    statusDot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                    statusText.textContent = '运行中';
+                    crawlerStatus.textContent = `${data.progress || 0}% 完成`;
+                    activeCrawlers.textContent = '1';
+                } else if (data.status === 'error') {
+                    statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+                    statusText.textContent = '错误';
+                    crawlerStatus.textContent = '出现错误';
+                    activeCrawlers.textContent = '0';
+                } else {
+                    statusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                    statusText.textContent = '待机中';
+                    crawlerStatus.textContent = '待机中';
+                    activeCrawlers.textContent = '0';
+                }
+
+                // 更新控制面板状态
+                updateCrawlerStatusDisplay(data);
+            } catch (error) {
+                console.error('Failed to load crawler status:', error);
+            }
+        }
+
+        // 加载数据
+        async function loadData() {
+            const tableBody = document.getElementById('tableBody');
+            const loadingSkeleton = document.getElementById('loadingSkeleton');
+            const emptyState = document.getElementById('emptyState');
+            
+            // 显示加载状态
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center"><div class="flex flex-col items-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div><p class="mt-4 text-sm text-slate-500">加载中...</p></div></td></tr>';
+            
+            try {
+                // 获取文件列表
+                const filesResponse = await fetch(`${API_BASE}/data/files?platform=xhs`);
+                const filesData = await filesResponse.json();
+                
+                document.getElementById('totalFiles').textContent = filesData.files?.length || 0;
+
+                // 获取最新的内容文件
+                const contentFiles = filesData.files
+                    ?.filter(f => f.path.includes('contents') && f.path.includes('.json'))
+                    .sort((a, b) => (b.modified_at || 0) - (a.modified_at || 0))
+                    .slice(0, 1);
+
+                const commentFiles = filesData.files
+                    ?.filter(f => f.path.includes('comments') && f.path.includes('.json'))
+                    .sort((a, b) => (b.modified_at || 0) - (a.modified_at || 0))
+                    .slice(0, 1);
+
+                let contentsData = [];
+                let commentsData = [];
+
+                if (contentFiles && contentFiles.length > 0) {
+                    const filePath = contentFiles[0].path;
+                    const contentResponse = await fetch(`${API_BASE}/data/files/${encodeURIComponent(filePath)}?preview=true&limit=100`);
+                    const contentData = await contentResponse.json();
+                    contentsData = contentData.data || [];
+                    document.getElementById('totalContents').textContent = contentData.total || 0;
+                }
+
+                if (commentFiles && commentFiles.length > 0) {
+                    const filePath = commentFiles[0].path;
+                    const commentResponse = await fetch(`${API_BASE}/data/files/${encodeURIComponent(filePath)}?preview=true&limit=100`);
+                    const commentData = await commentResponse.json();
+                    commentsData = commentData.data || [];
+                    document.getElementById('totalComments').textContent = commentData.total || 0;
+                }
+
+                displayData(contentsData, commentsData);
+
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <svg class="h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-slate-900">加载失败</h3>
+                                <p class="mt-1 text-sm text-slate-500">请检查 API 连接</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 显示数据
+        function displayData(contents, comments) {
+            const tableBody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (!contents || contents.length === 0) {
+                emptyState.classList.remove('hidden');
+                tableBody.innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            let filteredContents = contents;
+            if (currentFilter === 'comments') {
+                filteredContents = contents;
+            }
+
+            filteredContents = filteredContents.slice(0, 50);
+
+            tableBody.innerHTML = filteredContents.map(item => {
+                const title = item.title || item.desc || '无标题';
+                const keyword = item.source_keyword || '-';
+                const liked = formatNumber(item.liked_count || 0);
+                const comment = formatNumber(item.comment_count || 0);
+                const time = item.time ? new Date(item.time).toLocaleDateString('zh-CN') : '-';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors duration-150 cursor-pointer">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-slate-900 max-w-md truncate" title="${title}">${truncate(title, 50)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${keyword}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${liked}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${comment}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${time}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatNumber(num) {
+            if (typeof num === 'string') {
+                if (num.includes('万') || num.includes('w')) {
+                    return num;
+                }
+                num = parseInt(num) || 0;
+            }
+            if (num >= 10000) {
+                return (num / 10000).toFixed(1) + '万';
+            }
+            return num.toString();
+        }
+
+        function truncate(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        // 错误提示函数
+        function showError(message) {
+            // 创建或获取错误提示元素
+            let errorModal = document.getElementById('errorModal');
+            if (!errorModal) {
+                errorModal = document.createElement('div');
+                errorModal.id = 'errorModal';
+                errorModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden';
+                errorModal.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <svg class="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="text-lg font-semibold text-slate-900">错误</h3>
+                            </div>
+                            <p id="errorMessage" class="text-slate-700 mb-6"></p>
+                            <button id="closeErrorBtn" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(errorModal);
+                
+                document.getElementById('closeErrorBtn').addEventListener('click', () => {
+                    errorModal.classList.add('hidden');
+                });
+            }
+            
+            document.getElementById('errorMessage').textContent = message;
+            errorModal.classList.remove('hidden');
+        }
+
+        // 爬虫控制功能
+        function setupCrawlerControls() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const crawlerForm = document.getElementById('crawlerForm');
+            const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+            startBtn.addEventListener('click', async () => {
+                if (startBtn.disabled) return;
+                
+                const formData = {
+                    platform: document.getElementById('platform').value,
+                    login_type: document.getElementById('loginType').value,
+                    crawler_type: document.getElementById('crawlerType').value,
+                    keywords: document.getElementById('keywords').value.trim(),
+                    max_count: parseInt(document.getElementById('maxCount').value) || 150,
+                    sort_type: document.getElementById('sortType').value || null,
+                    enable_comments: document.getElementById('enableComments').checked,
+                    enable_sub_comments: document.getElementById('enableSubComments').checked,
+                    headless: document.getElementById('headless').checked,
+                    save_option: 'csv'
+                };
+
+                // 验证搜索模式的关键词
+                if (formData.crawler_type === 'search') {
+                    if (!formData.keywords || !formData.keywords.trim()) {
+                        showError('搜索模式必须输入关键词！');
+                        return;
+                    }
+                } else {
+                    // 非搜索模式不需要keywords和sort_type
+                    delete formData.keywords;
+                    delete formData.sort_type;
+                }
+
+                startBtn.disabled = true;
+                startBtn.textContent = '启动中...';
+
+                try {
+                    console.log('发送请求:', formData);
+                    const response = await fetch(`${API_BASE}/crawler/start`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    console.log('响应状态:', response.status, response.statusText);
+                    
+                    let result;
+                    const responseText = await response.text();
+                    console.log('响应内容:', responseText);
+                    
+                    try {
+                        result = responseText ? JSON.parse(responseText) : {};
+                    } catch (e) {
+                        result = { detail: responseText || '未知错误' };
+                    }
+                    
+                    if (response.ok) {
+                        document.getElementById('crawlerStatusDisplay').classList.remove('hidden');
+                        document.getElementById('logsDisplay').classList.remove('hidden');
+                        displayedLogIds.clear(); // 启动新爬虫时清空日志ID
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        // 立即加载一次状态和日志
+                        loadCrawlerStatus();
+                        loadCrawlerLogs();
+                        setTimeout(() => loadCrawlerStatus(), 1000);
+                    } else {
+                        const errorMsg = result.detail || result.message || result.error || JSON.stringify(result) || '未知错误';
+                        console.error('启动失败:', errorMsg);
+                        showError('启动失败: ' + errorMsg);
+                        startBtn.disabled = false;
+                        startBtn.textContent = '启动爬虫';
+                    }
+                } catch (error) {
+                    console.error('Error starting crawler:', error);
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Load failed')) {
+                        showError('无法连接到 API 服务器，请确保服务器正在运行 (http://localhost:8080)。\n\n请运行: uvicorn api.main:app --port 8080 --reload');
+                    } else {
+                        showError('启动失败: ' + error.message);
+                    }
+                    startBtn.disabled = false;
+                    startBtn.textContent = '启动爬虫';
+                }
+            });
+
+            stopBtn.addEventListener('click', async () => {
+                if (stopBtn.disabled) return;
+
+                stopBtn.disabled = true;
+                stopBtn.textContent = '停止中...';
+
+                try {
+                    const response = await fetch(`${API_BASE}/crawler/stop`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        startBtn.disabled = false;
+                        startBtn.textContent = '启动爬虫';
+                        stopBtn.disabled = true;
+                        stopBtn.textContent = '停止爬虫';
+                    } else {
+                        showError('停止失败: ' + (result.detail || result.message || '未知错误'));
+                        stopBtn.disabled = false;
+                        stopBtn.textContent = '停止爬虫';
+                    }
+                } catch (error) {
+                    console.error('Error stopping crawler:', error);
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        showError('无法连接到 API 服务器，请确保服务器正在运行');
+                    } else {
+                        showError('停止失败: ' + error.message);
+                    }
+                    stopBtn.disabled = false;
+                    stopBtn.textContent = '停止爬虫';
+                }
+            });
+
+            clearLogsBtn?.addEventListener('click', () => {
+                document.getElementById('logsContent').textContent = '';
+                displayedLogIds.clear(); // 清空已显示的日志ID
+            });
+        }
+
+        // 存储已显示的日志ID，避免重复显示
+        let displayedLogIds = new Set();
+        
+        // 加载爬虫日志
+        async function loadCrawlerLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/crawler/logs?limit=100`);
+                const data = await response.json();
+                
+                const logsContent = document.getElementById('logsContent');
+                if (data.logs && data.logs.length > 0) {
+                    // 只添加新的日志（通过ID判断）
+                    const newLogs = data.logs.filter(log => !displayedLogIds.has(log.id));
+                    
+                    if (newLogs.length > 0) {
+                        const newLogsHTML = newLogs.map(log => {
+                            displayedLogIds.add(log.id);
+                            
+                            // 格式化时间戳
+                            let timestamp = log.timestamp;
+                            try {
+                                // 如果timestamp是完整时间字符串，格式化它
+                                if (log.timestamp && log.timestamp.includes(':')) {
+                                    timestamp = log.timestamp;
+                                } else {
+                                    timestamp = new Date(log.timestamp).toLocaleTimeString('zh-CN');
+                                }
+                            } catch (e) {
+                                timestamp = log.timestamp || '--:--:--';
+                            }
+                            
+                            const levelClass = log.level === 'error' ? 'text-red-400' : 
+                                              log.level === 'warning' ? 'text-yellow-400' : 
+                                              'text-green-400';
+                            
+                            // 格式化消息：如果是JSON对象，尝试美化显示
+                            let message = log.message || '';
+                            try {
+                                // 如果消息包含JSON对象，尝试提取并格式化
+                                const jsonMatch = message.match(/\{[^}]+\}/);
+                                if (jsonMatch) {
+                                    const jsonObj = JSON.parse(jsonMatch[0]);
+                                    message = message.replace(jsonMatch[0], JSON.stringify(jsonObj, null, 2));
+                                }
+                            } catch (e) {
+                                // 如果解析失败，保持原样
+                            }
+                            
+                            return `<div class="${levelClass} text-xs mb-1">[${timestamp}] ${escapeHtml(message)}</div>`;
+                        }).join('');
+                        
+                        logsContent.innerHTML += newLogsHTML;
+                        
+                        // 自动滚动到底部
+                        logsContent.scrollTop = logsContent.scrollHeight;
+                    }
+                    
+                    // 限制日志数量，避免内存溢出
+                    if (displayedLogIds.size > 500) {
+                        // 清除旧的日志ID（保留最新的300个）
+                        const logIds = Array.from(displayedLogIds);
+                        displayedLogIds = new Set(logIds.slice(-300));
+                        
+                        // 重新渲染最近的日志
+                        const recentLogs = data.logs.filter(log => displayedLogIds.has(log.id)).slice(-100);
+                        logsContent.innerHTML = recentLogs.map(log => {
+                            let timestamp = log.timestamp;
+                            try {
+                                timestamp = log.timestamp && log.timestamp.includes(':') ? log.timestamp : new Date(log.timestamp).toLocaleTimeString('zh-CN');
+                            } catch (e) {
+                                timestamp = log.timestamp || '--:--:--';
+                            }
+                            const levelClass = log.level === 'error' ? 'text-red-400' : 
+                                              log.level === 'warning' ? 'text-yellow-400' : 
+                                              'text-green-400';
+                            return `<div class="${levelClass} text-xs mb-1">[${timestamp}] ${escapeHtml(log.message || '')}</div>`;
+                        }).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+            }
+        }
+        
+        // HTML转义函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 从日志中提取进度信息（备用方法）
+        function extractProgressFromLogs(logs) {
+            if (!logs || logs.length === 0) return null;
+            
+            // 尝试从最新的日志中提取进度信息
+            for (let i = logs.length - 1; i >= 0; i--) {
+                const log = logs[i];
+                const message = log.message || '';
+                
+                // 匹配进度模式：例如 "已爬取 10/150" 或 "progress: 10/150"
+                const progressMatch = message.match(/(?:已爬取|已处理|progress)[:：]?\s*(\d+)\s*[/／]\s*(\d+)/i);
+                if (progressMatch) {
+                    return {
+                        current: parseInt(progressMatch[1]),
+                        total: parseInt(progressMatch[2]),
+                        progress: Math.round((parseInt(progressMatch[1]) / parseInt(progressMatch[2])) * 100)
+                    };
+                }
+                
+                // 匹配页数：例如 "第 3 页" 或 "page: 3"
+                const pageMatch = message.match(/(?:第|page)[:：]?\s*(\d+)\s*页/i);
+                if (pageMatch) {
+                    return { page: parseInt(pageMatch[1]) };
+                }
+            }
+            
+            return null;
+        }
+
+        // 更新爬虫状态显示
+        async function updateCrawlerStatusDisplay(data) {
+            const statusDisplay = document.getElementById('crawlerStatusDisplay');
+            const statusBadge = document.getElementById('statusBadge');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const currentCount = document.getElementById('currentCount');
+            const totalCount = document.getElementById('totalCount');
+            const currentPage = document.getElementById('currentPage');
+            const statusMessage = document.getElementById('statusMessage');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (data.status === 'running') {
+                statusDisplay.classList.remove('hidden');
+                statusBadge.textContent = '运行中';
+                statusBadge.className = 'px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800';
+                
+                // 尝试从日志中提取进度（如果API返回的进度为null）
+                let progress = data.progress;
+                let current = data.current_count;
+                let page = data.current_page;
+                
+                // 如果API没有返回进度，尝试从数据文件统计
+                if ((progress === null || progress === undefined) && data.total_count) {
+                    try {
+                        // 从文件列表API获取最新数据文件，统计实际数量
+                        const filesResponse = await fetch(`${API_BASE}/data/files?platform=${data.platform || 'xhs'}`);
+                        const filesData = await filesResponse.json();
+                        
+                        if (filesData.files && filesData.files.length > 0) {
+                            const contentFiles = filesData.files
+                                .filter(f => f.path && f.path.includes('contents') && f.path.includes('.json'))
+                                .sort((a, b) => (b.modified_at || 0) - (a.modified_at || 0));
+                            
+                            if (contentFiles.length > 0) {
+                                const filePath = contentFiles[0].path;
+                                const contentResponse = await fetch(`${API_BASE}/data/files/${encodeURIComponent(filePath)}?preview=false&limit=10000`);
+                                const contentData = await contentResponse.json();
+                                
+                                if (contentData.total !== undefined) {
+                                    current = contentData.total;
+                                    progress = Math.round((current / data.total_count) * 100);
+                                    console.log(`[Progress] 从数据文件统计: ${current}/${data.total_count} (${progress}%)`);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to get progress from data files:', e);
+                    }
+                }
+                
+                // 如果还是没进度，尝试从日志提取
+                if ((progress === null || progress === undefined || !current) && data.total_count) {
+                    try {
+                        const logsResponse = await fetch(`${API_BASE}/crawler/logs?limit=50`);
+                        const logsData = await logsResponse.json();
+                        if (logsData.logs) {
+                            const extracted = extractProgressFromLogs(logsData.logs);
+                            if (extracted) {
+                                if (extracted.progress !== undefined && extracted.current) {
+                                    progress = extracted.progress;
+                                    current = extracted.current;
+                                }
+                                if (extracted.page !== undefined) {
+                                    page = extracted.page;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to extract progress from logs:', e);
+                    }
+                }
+                
+                // 最终计算进度百分比
+                if ((progress === null || progress === undefined) && data.total_count && current) {
+                    progress = Math.round((current / data.total_count) * 100);
+                }
+                
+                // 更新UI（确保即使为0也显示）
+                const displayProgress = (progress !== null && progress !== undefined) ? Math.min(progress, 100) : 0;
+                const displayCurrent = (current !== null && current !== undefined) ? current : 0;
+                
+                // 强制更新进度条（触发重绘动画）
+                progressBar.style.width = `${displayProgress}%`;
+                progressBar.style.transition = 'width 0.5s ease';
+                progressText.textContent = `${displayProgress}%`;
+                currentCount.textContent = displayCurrent.toString();
+                totalCount.textContent = (data.total_count || 0).toString();
+                currentPage.textContent = (page && page > 0) ? page.toString() : '-';
+                statusMessage.textContent = data.message || '正在爬取...';
+                
+                // 调试输出（仅在进度有变化时）
+                if (displayProgress > 0 || displayCurrent > 0) {
+                    console.log(`[进度更新] ${displayCurrent}/${data.total_count} (${displayProgress}%)`);
+                }
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else if (data.status === 'idle') {
+                statusDisplay.classList.add('hidden');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            } else if (data.status === 'error') {
+                statusDisplay.classList.remove('hidden');
+                statusBadge.textContent = '错误';
+                statusBadge.className = 'px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800';
+                statusMessage.textContent = data.error_message || '发生错误，请查看日志';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+    </script>
+</body>
+</html>

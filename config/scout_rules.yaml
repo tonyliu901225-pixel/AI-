@@ -1,0 +1,24 @@
+# 🕵️ 抓取行为配置
+crawl_behavior:
+  headless_mode: true       # 是否开启无头模式 (调试时设为 false)
+  scroll_count: 10          # 向下滚动屏幕次数
+  request_delay: 2.0        # 每次翻页/点击的间隔秒数 (防反爬)
+  max_notes_to_crawl: 150    # 单次运行最大抓取数量
+  sort_by: "likes_descending"  # 关键词搜索后先按点赞数排序再爬取（热门优先）
+  goto_timeout_ms: 90000       # 首页/关键页面 goto 超时时间（毫秒），网络慢时调大
+  max_comments_per_note: 200   # 每条笔记最多爬取评论数（用于 VOC 分析）
+
+# 🧹 数据清洗阈值 (Token 成本控制关键)
+# 只有满足以下条件的笔记才会入库，其他的在 Python 层面直接丢弃
+data_filters:
+  min_content_length: 10    # 正文少于 10 字丢弃 (降低阈值以便测试)
+  min_likes: 5             # 点赞少于 5 丢弃 (降低阈值以便测试)
+  max_days_old: 365          # 超过 365 天的笔记丢弃 (放宽时间限制)
+
+# ⛔ 黑名单 (遇到这些词直接跳过)
+blacklist_keywords:
+  - "招聘"
+  - "兼职"
+  - "刷单"
+  - "广告"
+  - "无货源"

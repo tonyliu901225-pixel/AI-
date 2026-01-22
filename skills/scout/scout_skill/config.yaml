@@ -1,0 +1,13 @@
+keywords: "春节送礼,商务伴手礼"
+crawler_type: "search"
+platform: "xhs"
+login_type: "qrcode"
+sort_type: "general"
+save_data_option: ["json", "csv"]
+crawler_max_notes_count: 20
+crawler_max_sleep_sec: 6
+enable_get_images: true
+enable_get_meidas: true
+enable_get_comments: false
+start_from_page: 1
+cookies: ""

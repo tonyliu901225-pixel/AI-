@@ -1,0 +1,55 @@
+# 环境变量
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# 数据库
+database/*.db
+database/*.db-journal
+database/*.db-wal
+database/*.db-shm
+database/redbook_core_backup_*.db
+
+# 输出文件
+output/logs/*.log
+output/images/*
+output/prompts/*
+!output/logs/.gitkeep
+!output/images/.gitkeep
+!output/prompts/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 临时文件
+*.tmp
+*.bak
+*.cache
+
+# 配置文件中的敏感信息（保留模板）
+config/user_settings.json
+
+# 爬虫数据
+skills/scout/scout_skill/data/
+skills/scout/scout_skill/venv/

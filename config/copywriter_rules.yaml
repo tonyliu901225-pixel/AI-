@@ -1,0 +1,12 @@
+# 🧠 模型配置
+model_config:
+  # 说明：部分 Key / API 版本下 `gemini-1.5-pro` 可能 404，不再支持 generateContent。
+  # 建议使用 latest 或 2.0 系列；代码中也做了 404 自动回退。
+  model_name: "gemini-1.5-pro-latest"
+  temperature: 0.7              # 创作模式，稍微调高一点创造力
+  max_output_tokens: 2048
+
+# 🔍 检索配置 (RAG)
+rag_config:
+  max_references: 5             # 每次写作文案参考几篇历史爆款
+  min_similarity_score: 0.5     # (预留字段)
