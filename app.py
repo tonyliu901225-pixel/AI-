@@ -1,27 +1,33 @@
+# 1. 这一行必须在最前面！
+from __future__ import annotations
+
+# 2. 这里放标准库导入
 import os
 import subprocess
 import sys
 
-# === 自动安装 Playwright 浏览器的补丁 ===
+# === 3. 自动安装 Playwright 浏览器的补丁 (放在这里) ===
 def install_playwright():
     try:
         # 尝试导入 playwright，看看浏览器是否已安装
-        from playwright.sync_api import sync_playwright
-        # 这里只是简单检查，实际上如果没有浏览器二进制文件，运行通常会报错
-        # 为了保险，我们直接运行 install 命令，playwright 会自己判断是否需要下载
-        print("正在检查/安装 Playwright 浏览器内核...")
+        # 注意：这里我们只做检查，具体导入在后面的业务逻辑中
+        import playwright
+        print("正在检查 Playwright 浏览器内核...")
+        # 强制运行一次 install chromium，确保环境中有浏览器
         subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-        print("Playwright 浏览器内核安装完成！")
+        print("Playwright 浏览器内核检查/安装完成！")
     except Exception as e:
-        print(f"安装 Playwright 浏览器失败: {e}")
+        print(f"安装 Playwright 浏览器失败 (如果是本地运行请忽略): {e}")
 
-# 在程序启动时运行安装
+# 执行安装
 install_playwright()
-# ==========================================
+# ====================================================
 
-# 下面才是你原本的代码
+# 4. 最后才是其他的第三方库导入
 import streamlit as st
-# ...
+# ... 你的其他代码 ...
+
+
 
 
 
