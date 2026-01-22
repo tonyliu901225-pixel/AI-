@@ -1,3 +1,31 @@
+import os
+import subprocess
+import sys
+
+# === 自动安装 Playwright 浏览器的补丁 ===
+def install_playwright():
+    try:
+        # 尝试导入 playwright，看看浏览器是否已安装
+        from playwright.sync_api import sync_playwright
+        # 这里只是简单检查，实际上如果没有浏览器二进制文件，运行通常会报错
+        # 为了保险，我们直接运行 install 命令，playwright 会自己判断是否需要下载
+        print("正在检查/安装 Playwright 浏览器内核...")
+        subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+        print("Playwright 浏览器内核安装完成！")
+    except Exception as e:
+        print(f"安装 Playwright 浏览器失败: {e}")
+
+# 在程序启动时运行安装
+install_playwright()
+# ==========================================
+
+# 下面才是你原本的代码
+import streamlit as st
+# ...
+
+
+
+
 # -*- coding: utf-8 -*-
 """Streamlit 4-stage Pipeline App
 
