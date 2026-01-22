@@ -1,4 +1,3 @@
-# 1. 这一行必须在最前面！
 from __future__ import annotations
 
 # 2. 这里放标准库导入
